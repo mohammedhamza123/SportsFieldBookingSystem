@@ -31,8 +31,16 @@ async def add_no_cache_headers(request: Request, call_next):
     return response
 
 # إعداد قاعدة البيانات
-SQLALCHEMY_DATABASE_URL = "sqlite:///./booking_system.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./booking_system.db")
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+# إعداد قاعدة البيانات
+if SQLALCHEMY_DATABASE_URL.startswith("postgresql"):
+    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+else:
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -172,9 +180,12 @@ def add_sample_data(db: Session):
 # إضافة مدير افتراضي
 def add_default_admin(db: Session):
     if db.query(Admin).count() == 0:
+        admin_username = os.getenv("ADMIN_USERNAME", "admin")
+        admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
+        
         admin = Admin(
-            username="admin",
-            password_hash=pwd_context.hash("admin123")
+            username=admin_username,
+            password_hash=pwd_context.hash(admin_password)
         )
         db.add(admin)
         db.commit()
@@ -787,4 +798,8 @@ if __name__ == "__main__":
     add_default_admin(db)
     db.close()
     
-    uvicorn.run(app, host="127.0.0.1", port=8000) 
+    # استخدام Environment Variables للـ host والـ port
+    host = os.getenv("HOST", "127.0.0.1")
+    port = int(os.getenv("PORT", "8000"))
+    
+    uvicorn.run(app, host=host, port=port) 
