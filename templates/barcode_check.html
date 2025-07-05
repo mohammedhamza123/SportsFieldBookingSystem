@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}التحقق من الحجز بالباركود{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-barcode me-2"></i>
+                    التحقق من الحجز بالباركود
+                </h4>
+            </div>
+            <div class="card-body">
+                <form id="barcode-form" autocomplete="off">
+                    <div class="mb-3">
+                        <label for="barcode-input" class="form-label">
+                            أدخل رقم الباركود أو امسح الرمز
+                        </label>
+                        <input type="text" class="form-control" id="barcode-input" name="barcode" required autofocus>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>
+                        تحقق
+                    </button>
+                </form>
+                <div id="result" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const form = document.getElementById('barcode-form');
+const resultDiv = document.getElementById('result');
+form.onsubmit = async function(e) {
+    e.preventDefault();
+    resultDiv.innerHTML = '<div class="text-center text-muted">جاري التحقق...</div>';
+    const formData = new FormData(form);
+    const res = await fetch('/api/barcode-check', {
+        method: 'POST',
+        body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+        const b = data.booking;
+        resultDiv.innerHTML = `
+        <div class='alert alert-success text-center'>تم العثور على الحجز!</div>
+        <div class='card mb-3'>
+            <div class='card-body'>
+                <h5 class='mb-3'><i class='fas fa-ticket-alt me-2'></i>رقم الحجز: <span class='text-primary'>${b.booking_id}</span></h5>
+                <p><strong>العميل:</strong> ${b.customer_name}</p>
+                <p><strong>المباراة:</strong> ${b.match_title}</p>
+                <p><strong>التاريخ:</strong> ${b.match_date} <strong>الوقت:</strong> ${b.match_time}</p>
+                <p><strong>رقم المقعد:</strong> ${b.seat_number} <strong>النوع:</strong> ${b.is_vip ? 'VIP' : 'عادي'}</p>
+                <p><strong>السعر:</strong> ${b.total_price} دينار ليبي</p>
+                <p><strong>تاريخ الحجز:</strong> ${b.booking_date}</p>
+            </div>
+        </div>
+        `;
+    } else {
+        resultDiv.innerHTML = `<div class='alert alert-danger text-center'>${data.message}</div>`;
+    }
+}
+</script>
+{% endblock %} 

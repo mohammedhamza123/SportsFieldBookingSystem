@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+
+{% block title %}حجز مقعد - {{ match.title }} - ليبيا{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3 class="text-center mb-4">
+                    <i class="fas fa-ticket-alt me-2"></i>
+                    حجز مقعد - {{ match.title }}
+                </h3>
+                
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <i class="fas fa-calendar text-primary me-1"></i>
+                        <strong>التاريخ:</strong> {{ match.date.strftime('%Y-%m-%d') }}
+                    </div>
+                    <div class="col-md-3">
+                        <i class="fas fa-clock text-primary me-1"></i>
+                        <strong>الوقت:</strong> {{ match.time }}
+                    </div>
+                    <div class="col-md-3">
+                        <span class="price-badge">
+                            <i class="fas fa-ticket-alt me-1"></i>
+                            عادي: {{ match.price_normal }} دينار
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="vip-badge">
+                            <i class="fas fa-crown me-1"></i>
+                            VIP: {{ match.price_vip }} دينار
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="text-center mb-4">
+                    <i class="fas fa-chair me-2"></i>
+                    اختيار المقعد
+                </h4>
+                
+                <div class="stadium-layout">
+                    <!-- VIP Section -->
+                    <div class="vip-section">
+                        <h5 class="text-center mb-3">
+                            <i class="fas fa-crown me-2"></i>
+                            مقاعد VIP (1-100)
+                        </h5>
+                        <div class="text-center" id="vip-seats">
+                            {% for i in range(1, 101) %}
+                            <div class="seat {% if i in booked_seats %}booked{% else %}available vip{% endif %}" 
+                                 data-seat="{{ i }}" 
+                                 data-type="vip" 
+                                 data-price="{{ match.price_vip }}">
+                                {{ i }}
+                            </div>
+                            {% if i % 10 == 0 %}<br>{% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Normal Section -->
+                    <div class="normal-section">
+                        <h5 class="text-center mb-3">
+                            <i class="fas fa-chair me-2"></i>
+                            المقاعد العادية (101-250)
+                        </h5>
+                        <div class="text-center" id="normal-seats">
+                            {% for i in range(101, 251) %}
+                            <div class="seat {% if i in booked_seats %}booked{% else %}available{% endif %}" 
+                                 data-seat="{{ i }}" 
+                                 data-type="normal" 
+                                 data-price="{{ match.price_normal }}">
+                                {{ i }}
+                            </div>
+                            {% if i % 10 == 0 %}<br>{% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="seat available d-inline-block"></div>
+                            <span class="ms-2">متاح</span>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="seat booked d-inline-block"></div>
+                            <span class="ms-2">محجوز</span>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="seat vip d-inline-block"></div>
+                            <span class="ms-2">VIP</span>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="seat selected d-inline-block"></div>
+                            <span class="ms-2">مختار</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="text-center mb-4">
+                    <i class="fas fa-user me-2"></i>
+                    بيانات الحجز
+                </h4>
+                
+                <form id="booking-form">
+                    <input type="hidden" id="match-id" name="match_id" value="{{ match.id }}">
+                    <input type="hidden" id="selected-seat" name="seat_number">
+                    <input type="hidden" id="is-vip" name="is_vip">
+                    <input type="hidden" id="total-price" name="total_price">
+                    
+                    <div class="mb-3">
+                        <label for="customer-name" class="form-label">
+                            <i class="fas fa-user me-1"></i>
+                            الاسم الكامل
+                        </label>
+                        <input type="text" class="form-control" id="customer-name" name="customer_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="customer-phone" class="form-label">
+                            <i class="fas fa-phone me-1"></i>
+                            رقم الهاتف
+                        </label>
+                        <input type="tel" class="form-control" id="customer-phone" name="customer_phone" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="customer-email" class="form-label">
+                            <i class="fas fa-envelope me-1"></i>
+                            البريد الإلكتروني
+                        </label>
+                        <input type="email" class="form-control" id="customer-email" name="customer_email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment-method" class="form-label">
+                            <i class="fas fa-credit-card me-1"></i>
+                            طريقة الدفع
+                        </label>
+                        <select class="form-select" id="payment-method" name="payment_method" required onchange="togglePaymentCode()">
+                            <option value="">اختر طريقة الدفع</option>
+                            <option value="credit_card">بطاقة ائتمان</option>
+                            <option value="debit_card">بطاقة مدى</option>
+                            <option value="cash">نقداً</option>
+                            <option value="bank_transfer">تحويل بنكي</option>
+                            <option value="payment_code">كود دفع</option>
+                        </select>
+                    </div>
+                    
+                    <!-- قسم كود الدفع -->
+                    <div id="payment-code-section" style="display: none;">
+                        <div class="mb-3">
+                            <label for="payment-code" class="form-label">
+                                <i class="fas fa-key me-1"></i>
+                                كود الدفع
+                            </label>
+                            <input type="text" class="form-control" id="payment-code" name="payment_code" placeholder="أدخل كود الدفع">
+                            <small class="text-muted">أدخل كود الدفع الخاص بنوع المقعد المختار</small>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="validatePaymentCode()">
+                            <i class="fas fa-check me-1"></i>
+                            التحقق من الكود
+                        </button>
+                        <div id="code-validation-result" class="mt-2"></div>
+                    </div>
+                    
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-receipt me-1"></i>
+                                ملخص الحجز
+                            </h6>
+                            <div id="booking-summary">
+                                <p class="text-muted">يرجى اختيار مقعد أولاً</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-lg w-100" id="submit-booking" disabled>
+                        <i class="fas fa-check me-2"></i>
+                        تأكيد الحجز
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Queue Status Modal -->
+<div class="modal fade" id="queueModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-clock me-2"></i>
+                    معالجة الحجز
+                </h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">جاري التحميل...</span>
+                </div>
+                <h6>جاري معالجة طلب الحجز...</h6>
+                <p class="text-muted">يرجى الانتظار، يتم التحقق من توفر المقعد</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedSeat = null;
+let queuePosition = 0;
+
+// إدارة اختيار المقاعد
+document.querySelectorAll('.seat.available').forEach(seat => {
+    seat.addEventListener('click', function() {
+        if (selectedSeat) {
+            selectedSeat.classList.remove('selected');
+        }
+        
+        this.classList.add('selected');
+        selectedSeat = this;
+        
+        updateBookingSummary();
+        document.getElementById('submit-booking').disabled = false;
+    });
+});
+
+function updateBookingSummary() {
+    if (!selectedSeat) return;
+    
+    const seatNumber = selectedSeat.dataset.seat;
+    const seatType = selectedSeat.dataset.type;
+    const price = selectedSeat.dataset.price;
+    const isVip = seatType === 'vip';
+    
+    document.getElementById('selected-seat').value = seatNumber;
+    document.getElementById('is-vip').value = isVip.toString();
+    document.getElementById('total-price').value = price;
+    
+    const summary = document.getElementById('booking-summary');
+    summary.innerHTML = `
+        <div class="row">
+            <div class="col-6">
+                <strong>رقم المقعد:</strong><br>
+                <span class="badge bg-primary">${seatNumber}</span>
+            </div>
+            <div class="col-6">
+                <strong>نوع المقعد:</strong><br>
+                <span class="badge ${isVip ? 'bg-warning' : 'bg-info'}">${isVip ? 'VIP' : 'عادي'}</span>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-12">
+                <strong>السعر:</strong><br>
+                <span class="h5 text-success">${price} دينار</span>
+            </div>
+        </div>
+    `;
+}
+
+// خوارزمية الطابور
+class BookingQueue {
+    constructor() {
+        this.queue = [];
+        this.processing = false;
+    }
+    
+    addToQueue(bookingData) {
+        return new Promise((resolve, reject) => {
+            const queueItem = {
+                id: Date.now(),
+                data: bookingData,
+                resolve,
+                reject
+            };
+            
+            this.queue.push(queueItem);
+            this.processQueue();
+        });
+    }
+    
+    async processQueue() {
+        if (this.processing || this.queue.length === 0) return;
+        
+        this.processing = true;
+        
+        while (this.queue.length > 0) {
+            const item = this.queue.shift();
+            
+            try {
+                // محاكاة معالجة الحجز
+                const result = await this.processBooking(item.data);
+                item.resolve(result);
+            } catch (error) {
+                item.reject(error);
+            }
+            
+            // انتظار قصير بين المعالجات
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        this.processing = false;
+    }
+    
+    async processBooking(bookingData) {
+        // محاكاة التحقق من توفر المقعد
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // إرسال طلب الحجز
+        const formData = new FormData();
+        for (const [key, value] of Object.entries(bookingData)) {
+            formData.append(key, value);
+        }
+        
+        const response = await fetch('/api/book-seat', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || `فشل في الحجز (${response.status})`);
+        }
+        
+        const result = await response.json();
+        console.log('Booking result:', result); // للتشخيص
+        return result;
+    }
+}
+
+const bookingQueue = new BookingQueue();
+
+// معالجة تقديم النموذج
+document.getElementById('booking-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!selectedSeat) {
+        alert('يرجى اختيار مقعد أولاً');
+        return;
+    }
+    
+    // إظهار modal الطابور
+    const queueModal = new bootstrap.Modal(document.getElementById('queueModal'));
+    queueModal.show();
+    
+    // جمع بيانات النموذج
+    const formData = new FormData(this);
+    const bookingData = Object.fromEntries(formData);
+    
+    // إضافة كود الدفع إذا تم اختياره
+    if (bookingData.payment_method === 'payment_code') {
+        const paymentCode = document.getElementById('payment-code').value;
+        if (paymentCode) {
+            bookingData.payment_code = paymentCode;
+        }
+    }
+    
+    // التشخيص - طباعة البيانات المرسلة
+    console.log('Booking data being sent:', bookingData);
+    
+    // التحقق من الحقول المطلوبة
+    const requiredFields = ['match_id', 'seat_number', 'is_vip', 'customer_name', 'customer_phone', 'customer_email', 'payment_method'];
+    const missingFields = requiredFields.filter(field => !bookingData[field]);
+    
+    if (missingFields.length > 0) {
+        alert(`الحقول التالية مطلوبة: ${missingFields.join(', ')}`);
+        return;
+    }
+    
+    try {
+        // إضافة الحجز إلى الطابور
+        const result = await bookingQueue.addToQueue(bookingData);
+        
+        // إخفاء modal
+        queueModal.hide();
+        
+        console.log('Final result:', result); // للتشخيص
+        
+        // التحقق من وجود booking_id
+        if (result && result.booking_id) {
+            // الانتقال إلى صفحة التأكيد
+            window.location.href = `/confirmation/${result.booking_id}`;
+        } else {
+            throw new Error('لم يتم الحصول على رقم الحجز من الخادم');
+        }
+        
+    } catch (error) {
+        queueModal.hide();
+        console.error('Booking error:', error); // للتشخيص
+        alert('حدث خطأ في الحجز: ' + error.message);
+    }
+});
+
+// تحديث المقاعد المحجوزة في الوقت الفعلي
+function updateBookedSeats() {
+    fetch(`/api/booked-seats/{{ match.id }}`)
+        .then(response => response.json())
+        .then(data => {
+            // إزالة الفئة "booked" من جميع المقاعد
+            document.querySelectorAll('.seat').forEach(seat => {
+                seat.classList.remove('booked');
+                seat.classList.add('available');
+            });
+            
+            // إضافة الفئة "booked" للمقاعد المحجوزة
+            data.booked_seats.forEach(seatNumber => {
+                const seatElement = document.querySelector(`[data-seat="${seatNumber}"]`);
+                if (seatElement) {
+                    seatElement.classList.remove('available');
+                    seatElement.classList.add('booked');
+                }
+            });
+        })
+        .catch(error => console.error('خطأ في تحديث المقاعد:', error));
+}
+
+// تحديث المقاعد كل 30 ثانية
+setInterval(updateBookedSeats, 30000);
+
+// تحديث المقاعد عند تحميل الصفحة
+updateBookedSeats();
+
+// دوال إدارة كود الدفع
+function togglePaymentCode() {
+    const paymentMethod = document.getElementById('payment-method').value;
+    const paymentCodeSection = document.getElementById('payment-code-section');
+    
+    if (paymentMethod === 'payment_code') {
+        paymentCodeSection.style.display = 'block';
+    } else {
+        paymentCodeSection.style.display = 'none';
+        document.getElementById('code-validation-result').innerHTML = '';
+    }
+}
+
+function validatePaymentCode() {
+    const code = document.getElementById('payment-code').value;
+    const seatType = selectedSeat ? selectedSeat.dataset.type : 'normal';
+    const resultDiv = document.getElementById('code-validation-result');
+    
+    if (!code) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">يرجى إدخال كود الدفع</div>';
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('code', code);
+    formData.append('code_type', seatType);
+    
+    fetch('/api/validate-code', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    الكود صحيح! القيمة: ${data.value} دينار
+                    <br><small>ينتهي في: ${new Date(data.expires_at).toLocaleDateString('ar-SA')}</small>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-times-circle me-1"></i>
+                    ${data.message}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                حدث خطأ في التحقق من الكود
+            </div>
+        `;
+    });
+}
+</script>
+{% endblock %} 

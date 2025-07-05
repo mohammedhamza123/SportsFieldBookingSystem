@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام حجز مباريات كرة القدم - ليبيا{% endblock %}</title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://images.unsplash.com/photo-1552318965-6e6be7484ada?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: rgba(0, 0, 0, 0.9) !important;
+            backdrop-filter: blur(10px);
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: bold;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: bold;
+        }
+        
+        .match-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .match-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .seat {
+            width: 40px;
+            height: 40px;
+            margin: 2px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .seat.available {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .seat.available:hover {
+            background: #218838;
+            transform: scale(1.1);
+        }
+        
+        .seat.booked {
+            background: #ff0000 !important;
+            color: white;
+            border-color: #ff0000 !important;
+            cursor: not-allowed;
+        }
+        
+        .seat.vip {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+            border-color: #ffd700;
+        }
+        
+        .seat.selected {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+            transform: scale(1.1);
+        }
+        
+        .stadium-layout {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .vip-section {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .normal-section {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.9), rgba(40, 167, 69, 0.9));
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+        
+        .price-badge {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .vip-badge {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-futbol me-2"></i>
+                نظام حجز المباريات
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i>
+                            الرئيسية
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/barcode-check">
+                            <i class="fas fa-barcode me-1"></i>
+                            التحقق من الحجز
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin">
+                            <i class="fas fa-cog me-1"></i>
+                            لوحة التحكم
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-white py-4 mt-5">
+        <div class="container">
+            <p>&copy; 2025 نظام حجز مباريات كرة القدم. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // منع الرجوع في الصفحات الإدارية
+    if (window.location.pathname.startsWith('/admin')) {
+        // منع التخزين المؤقت
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+        
+        // منع الرجوع باستخدام زر المتصفح
+        window.addEventListener('load', function() {
+            if (window.history && window.history.pushState) {
+                window.history.pushState(null, null, window.location.href);
+                window.addEventListener('popstate', function() {
+                    window.history.pushState(null, null, window.location.href);
+                });
+            }
+        });
+        
+        // منع الرجوع عند الضغط على Alt+Left أو Backspace
+        document.addEventListener('keydown', function(e) {
+            if ((e.altKey && e.keyCode === 37) || e.keyCode === 8) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

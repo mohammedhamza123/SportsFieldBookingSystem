@@ -1,0 +1,819 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة تحكم المدير - ليبيا{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="hero-section">
+            <div class="container">
+                <h1 class="display-4 mb-4">
+                    <i class="fas fa-cog me-3"></i>
+                    لوحة تحكم المدير - ملعب 11 يونيو طرابلس
+                </h1>
+                <p class="lead">إدارة المباريات والحجوزات - ليبيا</p>
+                <div class="mt-4">
+                    <a href="/barcode-check" class="btn btn-info btn-lg me-3">
+                        <i class="fas fa-barcode me-2"></i>
+                        التحقق من الحجز
+                    </a>
+                    <a href="/admin/logout-confirm" class="btn btn-warning btn-lg">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        تسجيل الخروج
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- إحصائيات سريعة -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-futbol fa-3x text-primary mb-3"></i>
+                <h4>{{ matches|length }}</h4>
+                <p class="text-muted">إجمالي المباريات</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-ticket-alt fa-3x text-success mb-3"></i>
+                <h4>{{ bookings|length }}</h4>
+                <p class="text-muted">إجمالي الحجوزات</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-crown fa-3x text-warning mb-3"></i>
+                <h4>{{ bookings|selectattr('is_vip', 'equalto', true)|list|length }}</h4>
+                <p class="text-muted">حجوزات VIP</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-money-bill-wave fa-3x text-info mb-3"></i>
+                <h4>{{ bookings|sum(attribute='total_price') }} دينار</h4>
+                <p class="text-muted">إجمالي الإيرادات</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-user-shield fa-3x text-success mb-3"></i>
+                <h4>{{ active_sessions }}</h4>
+                <p class="text-muted">الجلسات النشطة</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- إضافة مباراة جديدة -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus me-2"></i>
+                    إضافة مباراة جديدة
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="add-match-form">
+                    <div class="mb-3">
+                        <label for="match-title" class="form-label">عنوان المباراة</label>
+                        <input type="text" class="form-control" id="match-title" name="title" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="match-date" class="form-label">التاريخ</label>
+                        <input type="date" class="form-control" id="match-date" name="date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="match-time" class="form-label">الوقت</label>
+                        <input type="time" class="form-control" id="match-time" name="time" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="price-normal" class="form-label">سعر المقعد العادي (دينار)</label>
+                        <input type="number" class="form-control" id="price-normal" name="price_normal" min="0" step="0.01" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="price-vip" class="form-label">سعر مقعد VIP (دينار)</label>
+                        <input type="number" class="form-control" id="price-vip" name="price_vip" min="0" step="0.01" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة المباراة
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- قائمة المباريات -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    قائمة المباريات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>المباراة</th>
+                                <th>التاريخ</th>
+                                <th>الوقت</th>
+                                <th>السعر العادي</th>
+                                <th>سعر VIP</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for match in matches %}
+                            <tr data-match-id="{{ match.id }}">
+                                <td>{{ match.title }}</td>
+                                <td>{{ match.date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ match.time }}</td>
+                                <td>{{ match.price_normal }} دينار</td>
+                                <td>{{ match.price_vip }} دينار</td>
+                                <td>
+                                    {% if match.is_active %}
+                                    <span class="badge bg-success">نشط</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">غير نشط</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="viewMatchDetails({{ match.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-warning" onclick="editMatch({{ match.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteMatch({{ match.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- قائمة الحجوزات -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-ticket-alt me-2"></i>
+                    قائمة الحجوزات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>رقم الحجز</th>
+                                <th>المباراة</th>
+                                <th>العميل</th>
+                                <th>رقم المقعد</th>
+                                <th>النوع</th>
+                                <th>السعر</th>
+                                <th>طريقة الدفع</th>
+                                <th>تاريخ الحجز</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-primary">{{ booking.booking_id[:8] }}...</span>
+                                </td>
+                                <td>
+                                    {% for match in matches %}
+                                        {% if match.id == booking.match_id %}
+                                            {{ match.title }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td>{{ booking.customer_name }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ booking.seat_number }}</span>
+                                </td>
+                                <td>
+                                    {% if booking.is_vip %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-crown me-1"></i>
+                                        VIP
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-info">عادي</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ booking.total_price }} دينار</td>
+                                <td>
+                                    {% if booking.payment_method == 'credit_card' %}
+                                        <i class="fas fa-credit-card me-1"></i>
+                                        بطاقة ائتمان
+                                    {% elif booking.payment_method == 'debit_card' %}
+                                        <i class="fas fa-credit-card me-1"></i>
+                                        بطاقة مدى
+                                    {% elif booking.payment_method == 'cash' %}
+                                        <i class="fas fa-money-bill me-1"></i>
+                                        نقداً
+                                                                {% elif booking.payment_method == 'bank_transfer' %}
+                                <i class="fas fa-university me-1"></i>
+                                تحويل بنكي
+                            {% elif booking.payment_method == 'payment_code' %}
+                                <i class="fas fa-key me-1"></i>
+                                كود دفع
+                            {% endif %}
+                                </td>
+                                <td>{{ booking.booking_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="viewBookingDetails('{{ booking.booking_id }}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="cancelBooking('{{ booking.booking_id }}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- إدارة أكواد الدفع -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-key me-2"></i>
+                    إدارة أكواد الدفع
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>إنشاء أكواد جديدة</h6>
+                        <form id="generate-codes-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">عدد الأكواد</label>
+                                        <input type="number" class="form-control" name="count" min="1" max="100" value="10" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">نوع الكود</label>
+                                        <select class="form-select" name="code_type" required>
+                                            <option value="normal">عادي</option>
+                                            <option value="vip">VIP</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">قيمة الكود (دينار)</label>
+                                        <input type="number" class="form-control" name="value" min="0" step="0.01" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">مدة الصلاحية (أيام)</label>
+                                        <input type="number" class="form-control" name="expiry_days" min="1" value="30" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-plus me-2"></i>
+                                إنشاء الأكواد
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>الأكواد المنشأة</h6>
+                        <div id="generated-codes" class="border p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
+                            <p class="text-muted">لم يتم إنشاء أكواد بعد</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- قائمة الأكواد -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    قائمة أكواد الدفع
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>الكود</th>
+                                <th>النوع</th>
+                                <th>القيمة</th>
+                                <th>الحالة</th>
+                                <th>تاريخ الإنشاء</th>
+                                <th>تاريخ الانتهاء</th>
+                                <th>مستخدم بواسطة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payment-codes-table">
+                            <!-- سيتم ملء البيانات ديناميكياً -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تفاصيل المباراة -->
+<div class="modal fade" id="matchDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تفاصيل المباراة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="matchDetailsContent">
+                <!-- سيتم ملء المحتوى ديناميكياً -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تفاصيل الحجز -->
+<div class="modal fade" id="bookingDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تفاصيل الحجز</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="bookingDetailsContent">
+                <!-- سيتم ملء المحتوى ديناميكياً -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تعديل المباراة -->
+<div class="modal fade" id="editMatchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تعديل المباراة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-match-form">
+                    <input type="hidden" id="edit-match-id" name="match_id">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-match-title" class="form-label">عنوان المباراة</label>
+                                <input type="text" class="form-control" id="edit-match-title" name="title" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit-match-date" class="form-label">التاريخ</label>
+                                <input type="date" class="form-control" id="edit-match-date" name="date" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="edit-match-time" class="form-label">الوقت</label>
+                                <input type="time" class="form-control" id="edit-match-time" name="time" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="edit-price-normal" class="form-label">سعر المقعد العادي (دينار)</label>
+                                <input type="number" class="form-control" id="edit-price-normal" name="price_normal" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="edit-price-vip" class="form-label">سعر مقعد VIP (دينار)</label>
+                                <input type="number" class="form-control" id="edit-price-vip" name="price_vip" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="edit-match-active" name="is_active">
+                            <label class="form-check-label" for="edit-match-active">
+                                المباراة نشطة
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="updateMatch()">
+                    <i class="fas fa-save me-2"></i>
+                    حفظ التعديلات
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// إضافة مباراة جديدة
+document.getElementById('add-match-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch('/api/add-match', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            alert('تم إضافة المباراة بنجاح!');
+            location.reload();
+        } else {
+            alert('حدث خطأ في إضافة المباراة');
+        }
+    } catch (error) {
+        alert('حدث خطأ: ' + error.message);
+    }
+});
+
+// عرض تفاصيل المباراة
+function viewMatchDetails(matchId) {
+    const modal = new bootstrap.Modal(document.getElementById('matchDetailsModal'));
+    document.getElementById('matchDetailsContent').innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p>جاري تحميل التفاصيل...</p>
+        </div>
+    `;
+    modal.show();
+}
+
+// تعديل المباراة
+function editMatch(matchId) {
+    // البحث عن المباراة في الجدول
+    const row = document.querySelector(`tr[data-match-id="${matchId}"]`);
+    if (!row) {
+        alert('لم يتم العثور على المباراة');
+        return;
+    }
+    
+    // استخراج البيانات من الجدول
+    const title = row.cells[0].textContent.trim();
+    const date = row.cells[1].textContent.trim();
+    const time = row.cells[2].textContent.trim();
+    const priceNormal = parseFloat(row.cells[3].textContent.replace(' دينار', ''));
+    const priceVip = parseFloat(row.cells[4].textContent.replace(' دينار', ''));
+    const isActive = row.cells[5].querySelector('.badge').textContent.trim() === 'نشط';
+    
+    // ملء النموذج بالبيانات
+    document.getElementById('edit-match-id').value = matchId;
+    document.getElementById('edit-match-title').value = title;
+    document.getElementById('edit-match-date').value = date;
+    document.getElementById('edit-match-time').value = time;
+    document.getElementById('edit-price-normal').value = priceNormal;
+    document.getElementById('edit-price-vip').value = priceVip;
+    document.getElementById('edit-match-active').checked = isActive;
+    
+    // عرض Modal
+    const modal = new bootstrap.Modal(document.getElementById('editMatchModal'));
+    modal.show();
+}
+
+// تحديث المباراة
+function updateMatch() {
+    const form = document.getElementById('edit-match-form');
+    const formData = new FormData(form);
+    const matchId = formData.get('match_id');
+    
+    // التحقق من البيانات
+    const title = formData.get('title');
+    const date = formData.get('date');
+    const time = formData.get('time');
+    const priceNormal = formData.get('price_normal');
+    const priceVip = formData.get('price_vip');
+    const isActive = formData.get('is_active') === 'on';
+    
+    if (!title || !date || !time || !priceNormal || !priceVip) {
+        alert('يرجى ملء جميع الحقول المطلوبة');
+        return;
+    }
+    
+    // إظهار رسالة التحميل
+    const submitBtn = document.querySelector('#editMatchModal .btn-primary');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الحفظ...';
+    submitBtn.disabled = true;
+    
+    fetch(`/api/update-match/${matchId}`, {
+        method: 'PUT',
+        body: formData,
+        credentials: 'include'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم تحديث المباراة بنجاح');
+            location.reload();
+        } else {
+            alert('حدث خطأ في تحديث المباراة: ' + (data.detail || 'خطأ غير معروف'));
+        }
+    })
+    .catch(error => {
+        alert('حدث خطأ في الاتصال: ' + error.message);
+    })
+    .finally(() => {
+        // إعادة تفعيل الزر
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// حذف المباراة
+function deleteMatch(matchId) {
+    if (confirm('هل أنت متأكد من حذف هذه المباراة؟ سيتم حذف جميع الحجوزات المرتبطة بها.')) {
+        fetch(`/api/delete-match/${matchId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم حذف المباراة بنجاح');
+                location.reload();
+            } else {
+                alert('حدث خطأ في حذف المباراة');
+            }
+        })
+        .catch(error => {
+            alert('حدث خطأ: ' + error.message);
+        });
+    }
+}
+
+// عرض تفاصيل الحجز
+function viewBookingDetails(bookingId) {
+    const modal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
+    document.getElementById('bookingDetailsContent').innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p>جاري تحميل التفاصيل...</p>
+        </div>
+    `;
+    modal.show();
+}
+
+// حذف الحجز
+function cancelBooking(bookingId) {
+    if (confirm('هل أنت متأكد من حذف هذا الحجز؟')) {
+        fetch(`/api/delete-booking/${bookingId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم حذف الحجز بنجاح');
+                location.reload();
+            } else {
+                alert('حدث خطأ في حذف الحجز');
+            }
+        })
+        .catch(error => {
+            alert('حدث خطأ: ' + error.message);
+        });
+    }
+}
+
+// تحديث الإحصائيات في الوقت الفعلي
+function updateStats() {
+    // هنا يمكن إضافة كود لتحديث الإحصائيات
+}
+
+// تحديث الإحصائيات كل دقيقة
+setInterval(updateStats, 60000);
+
+// دوال إدارة أكواد الدفع
+function loadPaymentCodes() {
+    fetch('/api/payment-codes')
+    .then(response => response.json())
+    .then(data => {
+        displayPaymentCodes(data.codes);
+    })
+    .catch(error => {
+        console.error('Error loading payment codes:', error);
+    });
+}
+
+function displayPaymentCodes(codes) {
+    const tbody = document.getElementById('payment-codes-table');
+    if (codes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">لا توجد أكواد</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    codes.forEach(code => {
+        const status = code.is_used ? 
+            '<span class="badge bg-danger">مستخدم</span>' : 
+            (code.is_active ? '<span class="badge bg-success">متاح</span>' : '<span class="badge bg-secondary">غير نشط</span>');
+        
+        const usedBy = code.used_by ? code.used_by : '-';
+        const usedAt = code.used_at ? new Date(code.used_at).toLocaleDateString('ar-SA') : '-';
+        
+        html += `
+            <tr>
+                <td><code>${code.code}</code></td>
+                <td><span class="badge bg-${code.code_type === 'vip' ? 'warning' : 'info'}">${code.code_type === 'vip' ? 'VIP' : 'عادي'}</span></td>
+                <td>${code.value} دينار</td>
+                <td>${status}</td>
+                <td>${new Date(code.created_at).toLocaleDateString('ar-SA')}</td>
+                <td>${new Date(code.expires_at).toLocaleDateString('ar-SA')}</td>
+                <td>${usedBy}</td>
+                <td>
+                    ${!code.is_used ? `
+                        <button class="btn btn-sm btn-danger" onclick="deletePaymentCode(${code.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : ''}
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+function deletePaymentCode(codeId) {
+    if (confirm('هل أنت متأكد من حذف هذا الكود؟')) {
+        fetch(`/api/delete-code/${codeId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                loadPaymentCodes();
+            } else {
+                alert('حدث خطأ في حذف الكود');
+            }
+        })
+        .catch(error => {
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+
+// إدارة أكواد الدفع
+document.getElementById('generate-codes-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    generatePaymentCodes();
+});
+
+function generatePaymentCodes() {
+    const form = document.getElementById('generate-codes-form');
+    const formData = new FormData(form);
+    
+    // التحقق من البيانات
+    const count = formData.get('count');
+    const codeType = formData.get('code_type');
+    const value = formData.get('value');
+    const expiryDays = formData.get('expiry_days');
+    
+    if (!count || !codeType || !value || !expiryDays) {
+        alert('يرجى ملء جميع الحقول المطلوبة');
+        return;
+    }
+    
+    if (count < 1 || count > 100) {
+        alert('عدد الأكواد يجب أن يكون بين 1 و 100');
+        return;
+    }
+    
+    if (value <= 0) {
+        alert('قيمة الكود يجب أن تكون أكبر من صفر');
+        return;
+    }
+    
+    // إظهار رسالة التحميل
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإنشاء...';
+    submitBtn.disabled = true;
+    
+    fetch('/api/generate-codes', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // رسالة نجاح مع تفاصيل
+            const message = `${data.message}\n\nالأكواد المنشأة:\n${data.codes.map(c => `${c.code} (${c.type === 'vip' ? 'VIP' : 'عادي'} - ${c.value} دينار)`).join('\n')}`;
+            alert(message);
+            displayGeneratedCodes(data.codes);
+            loadPaymentCodes(); // إعادة تحميل قائمة الأكواد
+            form.reset();
+        } else {
+            alert('حدث خطأ في إنشاء الأكواد: ' + (data.detail || 'خطأ غير معروف'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال: ' + error.message);
+    })
+    .finally(() => {
+        // إعادة تفعيل الزر
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+function displayGeneratedCodes(codes) {
+    const container = document.getElementById('generated-codes');
+    if (codes.length === 0) {
+        container.innerHTML = '<p class="text-muted">لم يتم إنشاء أكواد بعد</p>';
+        return;
+    }
+    
+    let html = '<div class="row">';
+    codes.forEach(code => {
+        html += `
+            <div class="col-md-6 mb-2">
+                <div class="card border-warning">
+                    <div class="card-body p-2">
+                        <strong>${code.code}</strong><br>
+                        <small class="text-muted">${code.type === 'vip' ? 'VIP' : 'عادي'} - ${code.value} دينار</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// تحميل الأكواد عند تحميل الصفحة
+loadPaymentCodes();
+</script>
+{% endblock %} 

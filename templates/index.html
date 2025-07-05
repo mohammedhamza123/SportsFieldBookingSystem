@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}الرئيسية - نظام حجز مباريات كرة القدم - ليبيا{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <h1 class="display-4 mb-4">
+            <i class="fas fa-futbol me-3"></i>
+            مرحباً بك في نظام حجز مباريات كرة القدم
+        </h1>
+        <p class="lead">احجز مقعدك لمشاهدة أفضل المباريات في ملعب 11 يونيو - طرابلس - ليبيا</p>
+        <div class="mt-4">
+            <a href="/barcode-check" class="btn btn-info btn-lg me-3">
+                <i class="fas fa-barcode me-2"></i>
+                التحقق من الحجز
+            </a>
+        </div>
+        <div class="row justify-content-center mt-4">
+            <div class="col-md-3 text-center">
+                <div class="card bg-transparent border-0">
+                    <div class="card-body text-white">
+                        <i class="fas fa-ticket-alt fa-3x mb-3"></i>
+                        <h5>حجز سريع</h5>
+                        <p>احجز مقعدك بسهولة</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="card bg-transparent border-0">
+                    <div class="card-body text-white">
+                        <i class="fas fa-crown fa-3x mb-3"></i>
+                        <h5>مقاعد VIP</h5>
+                        <p>استمتع بأفضل المقاعد</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 text-center">
+                <div class="card bg-transparent border-0">
+                    <div class="card-body text-white">
+                        <i class="fas fa-credit-card fa-3x mb-3"></i>
+                        <h5>دفع آمن</h5>
+                        <p>طرق دفع متعددة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h2 class="text-white text-center mb-4">
+            <i class="fas fa-calendar-alt me-2"></i>
+            المباريات المتاحة
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    {% for match in matches %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card match-card h-100" onclick="window.location.href='/booking/{{ match.id }}'">
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-futbol fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title text-center mb-3">{{ match.title }}</h5>
+                
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <i class="fas fa-calendar text-primary me-1"></i>
+                        <strong>{{ match.date.strftime('%Y-%m-%d') }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <i class="fas fa-clock text-primary me-1"></i>
+                        <strong>{{ match.time }}</strong>
+                    </div>
+                </div>
+                
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <span class="price-badge">
+                            <i class="fas fa-ticket-alt me-1"></i>
+                            عادي: {{ match.price_normal }} دينار
+                        </span>
+                    </div>
+                    <div class="col-6">
+                        <span class="vip-badge">
+                            <i class="fas fa-crown me-1"></i>
+                            VIP: {{ match.price_vip }} دينار
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <small class="text-muted">
+                            <i class="fas fa-chair me-1"></i>
+                            المقاعد العادية: {{ match.normal_seats }}
+                        </small>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">
+                            <i class="fas fa-crown me-1"></i>
+                            مقاعد VIP: {{ match.vip_seats }}
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-ticket-alt me-2"></i>
+                        احجز الآن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not matches %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                <h4>لا توجد مباريات متاحة حالياً</h4>
+                <p class="text-muted">يرجى العودة لاحقاً للتحقق من المباريات الجديدة</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="text-center mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    معلومات مهمة
+                </h4>
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <i class="fas fa-map-marker-alt fa-2x text-primary mb-2"></i>
+                        <h6>موقع الملعب</h6>
+                        <p class="text-muted">ملعب 11 يونيو - طرابلس</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <i class="fas fa-phone fa-2x text-primary mb-2"></i>
+                        <h6>اتصل بنا</h6>
+                        <p class="text-muted">+218 91 234 5678</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                        <h6>البريد الإلكتروني</h6>
+                        <p class="text-muted">info@libya-stadium.ly</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

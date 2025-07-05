@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block title %}تأكيد الحجز - ليبيا{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle fa-5x text-success mb-3"></i>
+                    <h2 class="text-success">تم الحجز بنجاح!</h2>
+                    <p class="lead">شكراً لك، تم تأكيد حجزك بنجاح</p>
+                </div>
+                
+                <div class="alert alert-success">
+                    <h5>
+                        <i class="fas fa-ticket-alt me-2"></i>
+                        رقم الحجز: {{ booking.booking_id }}
+                    </h5>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-futbol me-2"></i>
+                            تفاصيل المباراة
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>المباراة:</strong>
+                            </div>
+                            <div class="col-6">
+                                {{ match.title }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>التاريخ:</strong>
+                            </div>
+                            <div class="col-6">
+                                {{ match.date.strftime('%Y-%m-%d') }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>الوقت:</strong>
+                            </div>
+                            <div class="col-6">
+                                {{ match.time }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>رقم المقعد:</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="badge bg-primary fs-6">{{ booking.seat_number }}</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>نوع المقعد:</strong>
+                            </div>
+                            <div class="col-6">
+                                {% if booking.is_vip %}
+                                <span class="badge bg-warning text-dark fs-6">
+                                    <i class="fas fa-crown me-1"></i>
+                                    VIP
+                                </span>
+                                {% else %}
+                                <span class="badge bg-info fs-6">عادي</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>
+                            بيانات العميل
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>الاسم:</strong>
+                            </div>
+                            <div class="col-6">
+                                {{ booking.customer_name }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>رقم الهاتف:</strong>
+                            </div>
+                            <div class="col-6">
+                                {{ booking.customer_phone }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>البريد الإلكتروني:</strong>
+                            </div>
+                            <div class="col-6">
+                                {{ booking.customer_email }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>طريقة الدفع:</strong>
+                            </div>
+                            <div class="col-6">
+                                {% if booking.payment_method == 'credit_card' %}
+                                    <i class="fas fa-credit-card me-1"></i>
+                                    بطاقة ائتمان
+                                {% elif booking.payment_method == 'debit_card' %}
+                                    <i class="fas fa-credit-card me-1"></i>
+                                    بطاقة مدى
+                                {% elif booking.payment_method == 'cash' %}
+                                    <i class="fas fa-money-bill me-1"></i>
+                                    نقداً
+                                {% elif booking.payment_method == 'bank_transfer' %}
+                                    <i class="fas fa-university me-1"></i>
+                                    تحويل بنكي
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>السعر:</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="h5 text-success">{{ booking.total_price }} دينار ليبي</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>تاريخ الحجز:</strong>
+                            </div>
+                            <div class="col-6">
+                                {{ booking.booking_date.strftime('%Y-%m-%d %H:%M') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    تعليمات مهمة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-clock text-primary me-2"></i>
+                                <strong>الوصول المبكر:</strong> يرجى الوصول قبل المباراة بساعة واحدة
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-id-card text-primary me-2"></i>
+                                <strong>الهوية:</strong> احضر هويتك أو جواز سفرك
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-mobile-alt text-primary me-2"></i>
+                                <strong>التذكرة الإلكترونية:</strong> احتفظ برقم الحجز معك
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                <strong>الموقع:</strong> ملعب 11 يونيو - طرابلس
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-phone text-primary me-2"></i>
+                                <strong>اتصل بنا:</strong> +218 91 0000000
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-envelope text-primary me-2"></i>
+                                <strong>البريد الإلكتروني:</strong> info@libya-stadium.ly
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-home me-2"></i>
+                العودة للرئيسية
+            </a>
+            <a href="/barcode-check" class="btn btn-info btn-lg me-3">
+                <i class="fas fa-barcode me-2"></i>
+                التحقق من الحجز
+            </a>
+            <button class="btn btn-success btn-lg" onclick="window.print()">
+                <i class="fas fa-print me-2"></i>
+                طباعة التذكرة
+            </button>
+        </div>
+        
+        <!-- QR Code Section -->
+        <div class="card mt-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-qrcode me-2"></i>
+                    رمز QR للتذكرة
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div id="qrcode" class="d-inline-block p-3 bg-white rounded shadow"></div>
+                <p class="text-muted mt-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    امسح هذا الرمز عند دخول الملعب
+                </p>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <strong>رقم الحجز:</strong> {{ booking.booking_id }}<br>
+                        <strong>تاريخ الإنشاء:</strong> {{ booking.booking_date.strftime('%Y-%m-%d %H:%M') }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Barcode Section -->
+        <div class="card mt-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-barcode me-2"></i>
+                    الباركود
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <svg id="barcode" class="d-inline-block p-3 bg-white rounded shadow"></svg>
+                <p class="text-muted mt-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    يمكن استخدام الباركود للدخول السريع
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- QR Code Library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<!-- Barcode Library -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<script>
+    // Generate QR Code with detailed information
+    const qrData = {
+        bookingId: '{{ booking.booking_id }}',
+        customerName: '{{ booking.customer_name }}',
+        matchId: '{{ booking.match_id }}',
+        seatNumber: '{{ booking.seat_number }}',
+        seatType: '{{ "VIP" if booking.is_vip else "عادي" }}',
+        price: '{{ booking.total_price }} دينار ليبي',
+        date: '{{ booking.booking_date.strftime("%Y-%m-%d %H:%M") }}',
+        location: 'ملعب 11 يونيو - طرابلس - ليبيا',
+        matchTitle: '{{ match.title }}',
+        matchDate: '{{ match.date.strftime("%Y-%m-%d") }}',
+        matchTime: '{{ match.time }}'
+    };
+    
+    QRCode.toCanvas(document.getElementById('qrcode'), JSON.stringify(qrData), {
+        width: 200,
+        margin: 2,
+        color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+        }
+    }, function (error) {
+        if (error) console.error(error);
+    });
+    
+    // Generate Barcode
+    JsBarcode("#barcode", "{{ booking.booking_id }}", {
+        format: "CODE128",
+        width: 2,
+        height: 100,
+        displayValue: true,
+        fontSize: 16,
+        margin: 10,
+        background: "#ffffff",
+        lineColor: "#000000"
+    });
+
+    // طباعة التذكرة
+    function printTicket() {
+        window.print();
+    }
+
+    // إرسال رسالة تأكيد عبر البريد الإلكتروني (محاكاة)
+    function sendConfirmationEmail() {
+        // هنا يمكن إضافة كود لإرسال رسالة تأكيد
+        console.log('تم إرسال رسالة تأكيد إلى: {{ booking.customer_email }}');
+    }
+</script>
+<style>
+@media print {
+    body, html {
+        background: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .navbar, .footer, .btn, .card-header, .alert, .text-center.mt-4, .row.mt-4, .row.mb-4, .row .col-md-6 .card-header, .row .col-md-6 .card-header, .row .col-md-6 .card-header, .row .col-md-6 .card-header {
+        display: none !important;
+    }
+    .card, .card-body, .card-header {
+        box-shadow: none !important;
+        border: none !important;
+        background: #fff !important;
+    }
+    .container, .row, .col-lg-8, .col-md-6, .col-12 {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .mt-4, .mb-4, .mt-3, .mb-3 {
+        margin: 0 !important;
+    }
+    .d-print-none, .btn, a.btn {
+        display: none !important;
+    }
+    .card {
+        page-break-inside: avoid;
+    }
+    #qrcode, #barcode {
+        display: block;
+        margin: 0 auto;
+    }
+}
+</style>
+{% endblock %} 
