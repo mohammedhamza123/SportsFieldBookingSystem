@@ -26,14 +26,14 @@ The Sports Field Booking System is a web application built with FastAPI backend 
 ## المتطلبات - Requirements
 
 ### متطلبات النظام - System Requirements
-- Python 3.11.9 (مطلوب لحل مشاكل التوافق مع SQLAlchemy) - Python 3.11.9 (required for SQLAlchemy compatibility)
+- Python 3.9.18 (مطلوب لحل مشاكل التوافق مع SQLAlchemy) - Python 3.9.18 (required for SQLAlchemy compatibility)
 - متصفح ويب حديث - Modern web browser
 - اتصال بالإنترنت (لتنزيل الحزم) - Internet connection (for package installation)
 
 ### التوافق - Compatibility
-- ✅ Python 3.11.9
-- ✅ FastAPI 0.109.2
-- ✅ SQLAlchemy 2.0.27
+- ✅ Python 3.10.13
+- ✅ FastAPI 0.104.1
+- ✅ SQLAlchemy 1.4.53
 - ✅ Render.com
 - ✅ Heroku (مع تعديلات بسيطة)
 - ❌ Python 3.13 (غير متوافق مع SQLAlchemy الحالي)
@@ -73,7 +73,7 @@ python main.py
 
 #### Windows
 1. قم بزيارة [python.org](https://www.python.org/downloads/)
-2. حمل Python 3.11.9 (مطلوب لحل مشاكل التوافق مع SQLAlchemy)
+2. حمل Python 3.10.13 (مطلوب لحل مشاكل التوافق مع SQLAlchemy)
 3. شغل ملف التثبيت مع تفعيل "Add Python to PATH"
 4. تأكد من التثبيت:
    ```bash
