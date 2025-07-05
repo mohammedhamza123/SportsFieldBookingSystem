@@ -128,11 +128,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-booking_system.db
+# Database files (but keep for Render deployment)
+# *.db
+# *.sqlite
+# *.sqlite3
+# booking_system.db
 
 # IDE files
 .vscode/

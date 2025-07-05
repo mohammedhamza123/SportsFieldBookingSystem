@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 import json
 from typing import List, Optional
@@ -34,6 +34,10 @@ async def add_no_cache_headers(request: Request, call_next):
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./booking_system.db")
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+# معالجة DATABASE_URL من Render
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # إعداد قاعدة البيانات
 if SQLALCHEMY_DATABASE_URL.startswith("postgresql"):
@@ -72,7 +76,7 @@ class Booking(Base):
     customer_email = Column(String)
     payment_method = Column(String)
     total_price = Column(Float)
-    booking_date = Column(DateTime, default=datetime.utcnow)
+    booking_date = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     is_confirmed = Column(Boolean, default=False)
 
 class Admin(Base):
@@ -92,12 +96,16 @@ class PaymentCode(Base):
     is_used = Column(Boolean, default=False)
     used_by = Column(String, nullable=True)  # booking_id
     used_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     expires_at = Column(DateTime)
     is_active = Column(Boolean, default=True)
 
 # إنشاء الجداول
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+    print("✅ تم إنشاء قاعدة البيانات بنجاح")
+except Exception as e:
+    print(f"❌ خطأ في إنشاء قاعدة البيانات: {e}")
 
 # إعداد القوالب والملفات الثابتة
 templates = Jinja2Templates(directory="templates")
@@ -125,7 +133,7 @@ def add_sample_data(db: Session):
         sample_matches = [
             Match(
                 title="الأهلي طرابلس vs الاتحاد",
-                date=datetime.now() + timedelta(days=7),
+                date=datetime.now(timezone.utc) + timedelta(days=7),
                 time="20:00",
                 price_normal=25.0,
                 price_vip=75.0,
@@ -135,7 +143,7 @@ def add_sample_data(db: Session):
             ),
             Match(
                 title="الأهلي بنغازي vs النصر",
-                date=datetime.now() + timedelta(days=14),
+                date=datetime.now(timezone.utc) + timedelta(days=14),
                 time="21:30",
                 price_normal=30.0,
                 price_vip=90.0,
@@ -145,7 +153,7 @@ def add_sample_data(db: Session):
             ),
             Match(
                 title="الزاوية vs الهلال",
-                date=datetime.now() + timedelta(days=21),
+                date=datetime.now(timezone.utc) + timedelta(days=21),
                 time="19:00",
                 price_normal=20.0,
                 price_vip=60.0,
@@ -155,7 +163,7 @@ def add_sample_data(db: Session):
             ),
             Match(
                 title="الأولمبي vs التحدي",
-                date=datetime.now() + timedelta(days=28),
+                date=datetime.now(timezone.utc) + timedelta(days=28),
                 time="21:00",
                 price_normal=35.0,
                 price_vip=105.0,
@@ -165,7 +173,7 @@ def add_sample_data(db: Session):
             ),
             Match(
                 title="المروج vs الوحدة",
-                date=datetime.now() + timedelta(days=35),
+                date=datetime.now(timezone.utc) + timedelta(days=35),
                 time="17:30",
                 price_normal=22.0,
                 price_vip=66.0,
@@ -792,14 +800,19 @@ async def api_barcode_check(barcode: str = Form(...), db: Session = Depends(get_
 if __name__ == "__main__":
     import uvicorn
     
-    # إضافة البيانات التجريبية
-    db = SessionLocal()
-    add_sample_data(db)
-    add_default_admin(db)
-    db.close()
+    try:
+        # إضافة البيانات التجريبية
+        db = SessionLocal()
+        add_sample_data(db)
+        add_default_admin(db)
+        db.close()
+        print("✅ تم إضافة البيانات التجريبية بنجاح")
+    except Exception as e:
+        print(f"❌ خطأ في إضافة البيانات التجريبية: {e}")
     
     # استخدام Environment Variables للـ host والـ port
-    host = os.getenv("HOST", "127.0.0.1")
-    port = int(os.getenv("PORT", "8000"))
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "10000"))
     
-    uvicorn.run(app, host=host, port=port) 
+    print(f"🚀 بدء تشغيل الخادم على {host}:{port}")
+    uvicorn.run(app, host=host, port=port, reload=False) 
